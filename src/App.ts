@@ -42,7 +42,6 @@ import { PanelLayoutManager } from '@/app/panel-layout';
 import { DataLoaderManager } from '@/app/data-loader';
 import { EventHandlerManager } from '@/app/event-handlers';
 import { resolveUserRegion, resolvePreciseUserCoordinates, type PreciseCoordinates } from '@/utils/user-location';
-import { showProBanner } from '@/components/ProBanner';
 import {
   CorrelationEngine,
   militaryAdapter,
@@ -174,10 +173,22 @@ export class App {
 
     const PANEL_ORDER_KEY = 'panel-order';
     const PANEL_SPANS_KEY = 'worldmonitor-panel-spans';
+    const FORK_LAYOUT_MIGRATION_KEY = 'conflict-monitor-layout-v1';
 
     const isMobile = isMobileDevice();
     const isDesktopApp = isDesktopRuntime();
     const monitors = loadFromStorage<Monitor[]>(STORAGE_KEYS.monitors, []);
+
+    if (!localStorage.getItem(FORK_LAYOUT_MIGRATION_KEY)) {
+      localStorage.removeItem(STORAGE_KEYS.mapLayers);
+      localStorage.removeItem(STORAGE_KEYS.panels);
+      localStorage.removeItem(PANEL_ORDER_KEY);
+      localStorage.removeItem(PANEL_ORDER_KEY + '-bottom');
+      localStorage.removeItem(PANEL_ORDER_KEY + '-bottom-set');
+      localStorage.removeItem(PANEL_SPANS_KEY);
+      localStorage.setItem(FORK_LAYOUT_MIGRATION_KEY, 'done');
+      console.log('[App] Applied conflict monitor default layout migration');
+    }
 
     // Use mobile-specific defaults on first load (no saved layers)
     const defaultLayers = isMobile ? MOBILE_DEFAULT_MAP_LAYERS : DEFAULT_MAP_LAYERS;
@@ -523,7 +534,6 @@ export class App {
 
     // Phase 1: Layout (creates map + panels — they'll find hydrated data)
     this.panelLayout.init();
-    showProBanner(this.state.container);
 
     const mobileGeoCoords = await geoCoordsPromise;
     if (mobileGeoCoords && this.state.map) {
