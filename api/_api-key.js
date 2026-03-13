@@ -22,6 +22,26 @@ function isTrustedBrowserOrigin(origin) {
   return Boolean(origin) && BROWSER_ORIGIN_PATTERNS.some(p => p.test(origin));
 }
 
+function extractHostname(urlLike) {
+  if (!urlLike) return '';
+  try {
+    return new URL(urlLike).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function isTrustedBrowserHost(hostname) {
+  if (!hostname) return false;
+  if (hostname === 'worldmonitor.app' || hostname === 'www.worldmonitor.app' || hostname.endsWith('.worldmonitor.app')) {
+    return true;
+  }
+  if (/^[a-z0-9-]+\.vercel\.app$/.test(hostname)) {
+    return true;
+  }
+  return process.env.NODE_ENV !== 'production' && (hostname === 'localhost' || hostname === '127.0.0.1');
+}
+
 function extractOriginFromReferer(referer) {
   if (!referer) return '';
   try {
@@ -37,6 +57,7 @@ export function validateApiKey(req, options = {}) {
   // Same-origin browser requests don't send Origin (per CORS spec).
   // Fall back to Referer to identify trusted same-origin callers.
   const origin = req.headers.get('Origin') || extractOriginFromReferer(req.headers.get('Referer')) || '';
+  const requestHost = extractHostname(req.url);
 
   // Desktop app — always require API key
   if (isDesktopOrigin(origin)) {
@@ -48,6 +69,19 @@ export function validateApiKey(req, options = {}) {
 
   // Trusted browser origin (worldmonitor.app, Vercel previews, localhost dev) — no key needed
   if (isTrustedBrowserOrigin(origin)) {
+    if (forceKey && !key) {
+      return { valid: false, required: true, error: 'API key required' };
+    }
+    if (key) {
+      const validKeys = (process.env.WORLDMONITOR_VALID_KEYS || '').split(',').filter(Boolean);
+      if (!validKeys.includes(key)) return { valid: false, required: true, error: 'Invalid API key' };
+    }
+    return { valid: true, required: forceKey };
+  }
+
+  // Same-origin deploy requests may not reliably preserve Origin/Referer on all
+  // Vercel preview paths, so trust requests addressed to known web hosts.
+  if (isTrustedBrowserHost(requestHost)) {
     if (forceKey && !key) {
       return { valid: false, required: true, error: 'API key required' };
     }
