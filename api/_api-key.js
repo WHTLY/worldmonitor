@@ -14,6 +14,8 @@ const BROWSER_ORIGIN_PATTERNS = [
   ]),
 ];
 
+const PUBLIC_WEB_API_ENABLED = /^(1|true|yes)$/i.test(process.env.WORLDMONITOR_PUBLIC_WEB_API || '');
+
 function isDesktopOrigin(origin) {
   return Boolean(origin) && DESKTOP_ORIGIN_PATTERNS.some(p => p.test(origin));
 }
@@ -81,6 +83,19 @@ export function validateApiKey(req, options = {}) {
     const validKeys = (process.env.WORLDMONITOR_VALID_KEYS || '').split(',').filter(Boolean);
     if (!validKeys.includes(key)) return { valid: false, required: true, error: 'Invalid API key' };
     return { valid: true, required: true };
+  }
+
+  // Explicit web-only preview/self-host bypass. Enable only when you intend to
+  // expose non-premium browser APIs publicly without API keys.
+  if (PUBLIC_WEB_API_ENABLED) {
+    if (forceKey && !key) {
+      return { valid: false, required: true, error: 'API key required' };
+    }
+    if (key) {
+      const validKeys = (process.env.WORLDMONITOR_VALID_KEYS || '').split(',').filter(Boolean);
+      if (!validKeys.includes(key)) return { valid: false, required: true, error: 'Invalid API key' };
+    }
+    return { valid: true, required: forceKey };
   }
 
   // Trusted browser origin (worldmonitor.app, Vercel previews, localhost dev) — no key needed
