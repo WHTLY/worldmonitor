@@ -31,7 +31,12 @@ function extractHostname(urlLike) {
   }
 }
 
+function normalizeHostname(hostname) {
+  return String(hostname || '').toLowerCase().replace(/:\d+$/, '');
+}
+
 function isTrustedBrowserHost(hostname) {
+  hostname = normalizeHostname(hostname);
   if (!hostname) return false;
   if (hostname === 'worldmonitor.app' || hostname === 'www.worldmonitor.app' || hostname.endsWith('.worldmonitor.app')) {
     return true;
@@ -57,7 +62,11 @@ export function validateApiKey(req, options = {}) {
   // Same-origin browser requests don't send Origin (per CORS spec).
   // Fall back to Referer to identify trusted same-origin callers.
   const origin = req.headers.get('Origin') || extractOriginFromReferer(req.headers.get('Referer')) || '';
-  const requestHost = extractHostname(req.url);
+  const requestHosts = [
+    extractHostname(req.url),
+    normalizeHostname(req.headers.get('Host')),
+    normalizeHostname(req.headers.get('X-Forwarded-Host')),
+  ];
 
   // Desktop app — always require API key
   if (isDesktopOrigin(origin)) {
@@ -81,7 +90,7 @@ export function validateApiKey(req, options = {}) {
 
   // Same-origin deploy requests may not reliably preserve Origin/Referer on all
   // Vercel preview paths, so trust requests addressed to known web hosts.
-  if (isTrustedBrowserHost(requestHost)) {
+  if (requestHosts.some(isTrustedBrowserHost)) {
     if (forceKey && !key) {
       return { valid: false, required: true, error: 'API key required' };
     }
