@@ -47,6 +47,13 @@ function isTrustedBrowserHost(hostname) {
   return process.env.NODE_ENV !== 'production' && (hostname === 'localhost' || hostname === '127.0.0.1');
 }
 
+function hasTrustedBrowserFetchMetadata(req) {
+  const site = String(req.headers.get('Sec-Fetch-Site') || '').toLowerCase();
+  const mode = String(req.headers.get('Sec-Fetch-Mode') || '').toLowerCase();
+  return (site === 'same-origin' || site === 'same-site')
+    && (mode === 'cors' || mode === 'same-origin' || mode === 'no-cors');
+}
+
 function extractOriginFromReferer(referer) {
   if (!referer) return '';
   try {
@@ -78,6 +85,17 @@ export function validateApiKey(req, options = {}) {
 
   // Trusted browser origin (worldmonitor.app, Vercel previews, localhost dev) — no key needed
   if (isTrustedBrowserOrigin(origin)) {
+    if (forceKey && !key) {
+      return { valid: false, required: true, error: 'API key required' };
+    }
+    if (key) {
+      const validKeys = (process.env.WORLDMONITOR_VALID_KEYS || '').split(',').filter(Boolean);
+      if (!validKeys.includes(key)) return { valid: false, required: true, error: 'Invalid API key' };
+    }
+    return { valid: true, required: forceKey };
+  }
+
+  if (hasTrustedBrowserFetchMetadata(req)) {
     if (forceKey && !key) {
       return { valid: false, required: true, error: 'API key required' };
     }
