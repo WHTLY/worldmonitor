@@ -221,7 +221,7 @@ export class App {
     };
 
     const persistWorkshopDismissal = (): void => {
-      localStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
+      sessionStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
       hideOverlay(workshopOverlay);
     };
 
@@ -305,14 +305,14 @@ export class App {
     workshopCloseBtn?.addEventListener('click', persistWorkshopDismissal);
     workshopDismissBtn?.addEventListener('click', persistWorkshopDismissal);
     workshopCtaBtn?.addEventListener('click', () => {
-      localStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
+      sessionStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
       hideOverlay(workshopOverlay);
     });
     exitCloseBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
     exitDismissBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
     exitCtaBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
 
-    if (localStorage.getItem(WORKSHOP_DISMISSED_KEY) !== '1') {
+    if (sessionStorage.getItem(WORKSHOP_DISMISSED_KEY) !== '1') {
       workshopTimer = window.setTimeout(() => {
         showOverlay(workshopOverlay);
       }, 1200);
