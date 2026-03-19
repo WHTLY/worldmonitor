@@ -183,10 +183,8 @@ export class App {
 
     const shareText = 'Safe AGI Alliance: bookmark & share this, protect friends';
     const shareUrl = window.location.href;
-    const encodedUrl = encodeURIComponent(shareUrl);
     const encodedText = encodeURIComponent(shareText);
-    xBtn.href = `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-    linkedInBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    const encodedUrl = encodeURIComponent(shareUrl);
     telegramBtn.href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
 
     const showImageFallback = (): void => {
