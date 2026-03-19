@@ -167,6 +167,171 @@ export class App {
     }
   }
 
+  private setupAlliancePromos(): void {
+    const WORKSHOP_DISMISSED_KEY = 'safe-agi-workshop-dismissed';
+    const EXIT_INTENT_SHOWN_KEY = 'safe-agi-exit-intent-shown';
+    const workshopOverlay = document.getElementById('allianceWorkshopOverlay') as HTMLElement | null;
+    const exitOverlay = document.getElementById('allianceExitOverlay') as HTMLElement | null;
+    const shareBtn = document.getElementById('allianceShareBtn') as HTMLButtonElement | null;
+    const copyBtn = document.getElementById('allianceCopyBtn') as HTMLButtonElement | null;
+    const xBtn = document.getElementById('allianceXBtn') as HTMLAnchorElement | null;
+    const linkedInBtn = document.getElementById('allianceLinkedInBtn') as HTMLAnchorElement | null;
+    const telegramBtn = document.getElementById('allianceTelegramBtn') as HTMLAnchorElement | null;
+    const exitImage = document.getElementById('allianceExitImage') as HTMLImageElement | null;
+    const exitFallback = document.getElementById('allianceExitFallback') as HTMLElement | null;
+    if (!workshopOverlay || !exitOverlay || !shareBtn || !copyBtn || !xBtn || !linkedInBtn || !telegramBtn) return;
+
+    const shareText = 'Safe AGI Alliance: bookmark & share this, protect friends';
+    const shareUrl = window.location.href;
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedText = encodeURIComponent(shareText);
+    xBtn.href = `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+    linkedInBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    telegramBtn.href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+
+    const showImageFallback = (): void => {
+      if (exitImage) exitImage.hidden = true;
+      if (exitFallback) exitFallback.hidden = false;
+    };
+    if (exitImage) {
+      exitImage.addEventListener('error', showImageFallback);
+      if (exitImage.complete && exitImage.naturalWidth === 0) showImageFallback();
+    }
+
+    let activeOverlay: HTMLElement | null = null;
+    let workshopTimer: number | null = null;
+    let copyFeedbackTimer: number | null = null;
+
+    const hideOverlay = (overlay: HTMLElement | null): void => {
+      if (!overlay) return;
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (activeOverlay === overlay) activeOverlay = null;
+      if (!document.querySelector('.alliance-modal-overlay.active')) {
+        document.body.classList.remove('alliance-modal-open');
+      }
+    };
+
+    const showOverlay = (overlay: HTMLElement): void => {
+      if (activeOverlay && activeOverlay !== overlay) hideOverlay(activeOverlay);
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('alliance-modal-open');
+      activeOverlay = overlay;
+    };
+
+    const persistWorkshopDismissal = (): void => {
+      localStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
+      hideOverlay(workshopOverlay);
+    };
+
+    const resetCopyButton = (): void => {
+      copyBtn.classList.remove('copied');
+      copyBtn.setAttribute('aria-label', 'Copy link');
+    };
+
+    const copyLink = async (): Promise<void> => {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(shareUrl);
+        } else {
+          const tmp = document.createElement('textarea');
+          tmp.value = shareUrl;
+          tmp.setAttribute('readonly', 'true');
+          tmp.style.position = 'absolute';
+          tmp.style.left = '-9999px';
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          tmp.remove();
+        }
+        copyBtn.classList.add('copied');
+        copyBtn.setAttribute('aria-label', 'Link copied');
+        if (copyFeedbackTimer !== null) window.clearTimeout(copyFeedbackTimer);
+        copyFeedbackTimer = window.setTimeout(resetCopyButton, 1800);
+      } catch (error) {
+        console.warn('[App] Failed to copy Safe AGI Alliance link', error);
+      }
+    };
+
+    const handleShare = async (): Promise<void> => {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Safe AGI Alliance', text: shareText, url: shareUrl });
+          return;
+        }
+      } catch (error) {
+        console.warn('[App] Native share dismissed', error);
+      }
+      await copyLink();
+    };
+
+    const overlayClickHandler = (event: Event): void => {
+      const target = event.target as HTMLElement;
+      if (target === workshopOverlay) persistWorkshopDismissal();
+      if (target === exitOverlay) hideOverlay(exitOverlay);
+    };
+
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return;
+      if (activeOverlay === workshopOverlay) persistWorkshopDismissal();
+      if (activeOverlay === exitOverlay) hideOverlay(exitOverlay);
+    };
+
+    const exitIntentHandler = (event: MouseEvent): void => {
+      if (this.state.isMobile) return;
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      if (sessionStorage.getItem(EXIT_INTENT_SHOWN_KEY) === '1') return;
+      if (event.clientY > 12) return;
+      if (event.relatedTarget instanceof Node) return;
+      sessionStorage.setItem(EXIT_INTENT_SHOWN_KEY, '1');
+      showOverlay(exitOverlay);
+    };
+
+    shareBtn.addEventListener('click', () => { void handleShare(); });
+    copyBtn.addEventListener('click', () => { void copyLink(); });
+    workshopOverlay.addEventListener('click', overlayClickHandler);
+    exitOverlay.addEventListener('click', overlayClickHandler);
+    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('mouseout', exitIntentHandler);
+
+    const workshopCloseBtn = document.getElementById('allianceWorkshopClose');
+    const workshopDismissBtn = document.getElementById('allianceWorkshopDismiss');
+    const workshopCtaBtn = document.getElementById('allianceWorkshopCta');
+    const exitCloseBtn = document.getElementById('allianceExitClose');
+    const exitDismissBtn = document.getElementById('allianceExitDismiss');
+    const exitCtaBtn = document.getElementById('allianceExitCta');
+
+    workshopCloseBtn?.addEventListener('click', persistWorkshopDismissal);
+    workshopDismissBtn?.addEventListener('click', persistWorkshopDismissal);
+    workshopCtaBtn?.addEventListener('click', () => {
+      localStorage.setItem(WORKSHOP_DISMISSED_KEY, '1');
+      hideOverlay(workshopOverlay);
+    });
+    exitCloseBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
+    exitDismissBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
+    exitCtaBtn?.addEventListener('click', () => hideOverlay(exitOverlay));
+
+    if (localStorage.getItem(WORKSHOP_DISMISSED_KEY) !== '1') {
+      workshopTimer = window.setTimeout(() => {
+        showOverlay(workshopOverlay);
+      }, 1200);
+    }
+
+    this.modules.push({
+      destroy: () => {
+        if (workshopTimer !== null) window.clearTimeout(workshopTimer);
+        if (copyFeedbackTimer !== null) window.clearTimeout(copyFeedbackTimer);
+        document.removeEventListener('keydown', handleEscape);
+        document.removeEventListener('mouseout', exitIntentHandler);
+        workshopOverlay.removeEventListener('click', overlayClickHandler);
+        exitOverlay.removeEventListener('click', overlayClickHandler);
+        if (exitImage) exitImage.removeEventListener('error', showImageFallback);
+        document.body.classList.remove('alliance-modal-open');
+      },
+    });
+  }
+
   constructor(containerId: string) {
     const el = document.getElementById(containerId);
     if (!el) throw new Error(`Container ${containerId} not found`);
@@ -534,6 +699,7 @@ export class App {
 
     // Phase 1: Layout (creates map + panels — they'll find hydrated data)
     this.panelLayout.init();
+    this.setupAlliancePromos();
 
     const mobileGeoCoords = await geoCoordsPromise;
     if (mobileGeoCoords && this.state.map) {

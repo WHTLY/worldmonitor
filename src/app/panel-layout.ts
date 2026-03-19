@@ -119,6 +119,29 @@ export class PanelLayoutManager implements AppModule {
   renderLayout(): void {
     this.ctx.container.innerHTML = `
       ${this.ctx.isDesktopApp ? '<div class="tauri-titlebar" data-tauri-drag-region></div>' : ''}
+      <div class="alliance-promo-bar" id="alliancePromoBar">
+        <div class="alliance-promo-copy">
+          <span class="alliance-promo-badge">Safe AGI Alliance</span>
+          <span class="alliance-promo-text">bookmark & share this, protect friends</span>
+        </div>
+        <div class="alliance-promo-actions">
+          <button class="alliance-promo-action" id="allianceShareBtn" type="button" aria-label="Share Safe AGI Alliance">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49"/></svg>
+          </button>
+          <button class="alliance-promo-action" id="allianceCopyBtn" type="button" aria-label="Copy link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <a class="alliance-promo-action" id="allianceXBtn" href="#" target="_blank" rel="noopener" aria-label="Share on X">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="alliance-promo-action" id="allianceLinkedInBtn" href="#" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V19h3.38zM5.25 3A1.97 1.97 0 1 0 5.3 6.94 1.97 1.97 0 0 0 5.25 3m6.9 5.5H8.9V19h3.25v-5.5c0-1.45.28-2.86 2.08-2.86 1.78 0 1.8 1.66 1.8 2.96V19h3.25v-6.06c0-2.98-.64-5.27-4.12-5.27-1.67 0-2.8.92-3.26 1.8h.05z"/></svg>
+          </a>
+          <a class="alliance-promo-action" id="allianceTelegramBtn" href="#" target="_blank" rel="noopener" aria-label="Share on Telegram">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.66c.3-1.14-.8-2.08-1.86-1.63L3.43 9.46c-1.2.46-1.13 2.18.11 2.55l4.2 1.23 1.56 4.85c.4 1.24 2 1.47 2.72.4l2.35-3.46 4.28 3.13c.95.7 2.31.18 2.56-.98zM9.74 12.6l8.96-5.65-6.96 7.03a1 1 0 0 0-.25.45l-.72 2.75-.95-2.95a1 1 0 0 0-.68-.67z"/></svg>
+          </a>
+        </div>
+      </div>
       <div class="header">
         <div class="header-left">
           <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
@@ -241,6 +264,39 @@ export class PanelLayoutManager implements AppModule {
         </div>
         <span class="site-footer-copy">&copy; ${new Date().getFullYear()} Conflict Monitor</span>
       </footer>
+      <div class="alliance-modal-overlay" id="allianceWorkshopOverlay" aria-hidden="true">
+        <div class="alliance-modal" role="dialog" aria-modal="true" aria-labelledby="allianceWorkshopTitle">
+          <button class="alliance-modal-close" id="allianceWorkshopClose" type="button" aria-label="Close workshop popup">×</button>
+          <span class="alliance-modal-kicker">Safe AGI Alliance</span>
+          <h2 class="alliance-modal-title" id="allianceWorkshopTitle">AI Risk Prediction can save you</h2>
+          <p class="alliance-modal-body">Join the workshop to build the same.</p>
+          <div class="alliance-modal-actions">
+            <a class="alliance-modal-cta" id="allianceWorkshopCta" href="https://saisum.world" target="_blank" rel="noopener">Visit saisum.world</a>
+            <button class="alliance-modal-secondary" id="allianceWorkshopDismiss" type="button">Maybe later</button>
+          </div>
+        </div>
+      </div>
+      <div class="alliance-modal-overlay" id="allianceExitOverlay" aria-hidden="true">
+        <div class="alliance-modal alliance-modal-exit" role="dialog" aria-modal="true" aria-labelledby="allianceExitTitle">
+          <button class="alliance-modal-close" id="allianceExitClose" type="button" aria-label="Close expert popup">×</button>
+          <div class="alliance-exit-media">
+            <img class="alliance-exit-image" id="allianceExitImage" src="/safe-agi-alliance-event.jpg" alt="Yann LeCun and Ed Musinschi at a Safe AGI Alliance event" />
+            <div class="alliance-exit-image-fallback" id="allianceExitFallback" hidden>
+              <span>SAFE AGI</span>
+              <strong>Alliance Event</strong>
+            </div>
+          </div>
+          <div class="alliance-exit-copy">
+            <span class="alliance-modal-kicker">Safe AGI Alliance</span>
+            <h2 class="alliance-modal-title" id="allianceExitTitle">Meet top AI experts at events like WEF</h2>
+            <p class="alliance-modal-body">In the picture: Yann LeCun (ex-Meta) and Ed Musinschi (Safe AGI Alliance).</p>
+            <div class="alliance-modal-actions">
+              <a class="alliance-modal-cta" id="allianceExitCta" href="https://saisum.world" target="_blank" rel="noopener">Explore saisum.world</a>
+              <button class="alliance-modal-secondary" id="allianceExitDismiss" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
 
     this.createPanels();
