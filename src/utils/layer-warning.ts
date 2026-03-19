@@ -5,6 +5,7 @@ const DISMISS_KEY = 'wm-layer-warning-dismissed';
 let activeDialog: HTMLElement | null = null;
 
 export function showLayerWarning(threshold: number): void {
+  if (new URLSearchParams(window.location.search).get('layerWarning') !== 'true') return;
   if (getDismissed(DISMISS_KEY)) return;
   if (activeDialog) return;
   if (window.self !== window.top) return;
